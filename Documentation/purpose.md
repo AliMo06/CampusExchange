@@ -1,0 +1,1 @@
+All code documentation and models will be stored in this folder this will have all UML diagrams, use case diagrams, etc.

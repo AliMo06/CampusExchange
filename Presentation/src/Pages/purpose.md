@@ -1,0 +1,1 @@
+The Pages folder will contain files and potentially even folders for each page of the web app. 

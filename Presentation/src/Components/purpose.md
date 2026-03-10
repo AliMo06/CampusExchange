@@ -1,0 +1,1 @@
+Components will hold code and files to take the output of what to display from the backend, and then turn that into displayable content for the user to see on the web page.

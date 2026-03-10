@@ -1,0 +1,1 @@
+This folder contains files and code that will handle user input and be an intermediary between the Database, and Front End, it will use already many premade functions from Repositories, Services and Middleware to do so.

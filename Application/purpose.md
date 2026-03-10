@@ -1,0 +1,1 @@
+Application holds all backend code and logic, abstractions, and is the brain of the program, while it doesnt change HOW elements are displayed, it returns which elements and objects to display to the Presentation (Frontend)

@@ -1,0 +1,1 @@
+This folder will store code that helps abstract SQL requests from the rest of the backend to the database.
