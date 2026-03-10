@@ -1,1 +1,3 @@
-psycopg2-binary
+npm init -y
+npm install express pg dotenv
+npm install bcrypt jsonwebtoken
