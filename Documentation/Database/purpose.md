@@ -2,3 +2,61 @@ What is in this folder:
 
 Documentation relating to the database
 Database information and SQL code
+
+The CampusExchange database is organized into several tables that support the main features of the marketplace application. These tables store information about users, listings, messages, and other related data needed for the system to function.
+
+Users
+The Users table stores information about everyone who registers on the platform, including both students and administrators.
+
+Columns:
+id (Primary Key)
+email
+password_hash
+role_id
+created_at
+
+Roles
+The Roles table defines the different types of users in the system. This is used to support role-based access control (RBAC), which determines what actions each type of user is allowed to perform.
+
+Columns:
+id
+role_name
+
+Listings
+The Listings table contains all items that students post on the marketplace.
+
+Columns:
+id
+title
+description
+price
+category_id
+seller_id
+created_at
+
+Categories
+The Categories table stores the different categories that listings can belong to, such as textbooks, electronics, or furniture.
+
+Columns:
+id
+name
+
+Messages
+The Messages table stores communication between buyers and sellers regarding listings on the platform.
+
+Columns:
+id
+sender_id
+receiver_id
+listing_id
+message_text
+sent_at
+
+Relationships
+Several relationships exist between these tables:
+
+A user can create multiple listings (Users → Listings).
+
+A user can send and receive multiple messages (Users → Messages).
+
+Each listing belongs to one category (Listings → Categories).
