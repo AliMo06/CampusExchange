@@ -1,11 +1,37 @@
 const router = require('express').Router()
 
-router.get('/', (req, res) => {
-  res.json({ message: 'get all listings' })
+const listingRepository = require('../Repositories/listingRepo')
+
+router.post('/', async (req,res)=>{
+
+    try {
+
+        const listing = await listingRepository.createListing(req.body)
+
+        res.json(listing)
+
+    } catch(err){
+
+        res.status(500).json({error: err.message})
+
+    }
+
 })
 
-router.post('/', (req, res) => {
-  res.json({ message: 'create listing' })
+router.get('/', async (req,res)=>{
+
+    try {
+
+        const listings = await listingRepository.getAllListings()
+
+        res.json(listings)
+
+    } catch(err){
+
+        res.status(500).json({error: err.message})
+
+    }
+
 })
 
 module.exports = router
