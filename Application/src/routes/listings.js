@@ -2,7 +2,9 @@ const router = require('express').Router()
 
 const listingRepository = require('../Repositories/listingRepo')
 
-router.post('/', async (req,res)=>{
+const { requireAuth, requireRole } = require('../Middleware/authMiddleware')
+
+router.post('/', requireAuth, async (req,res)=>{
 
     try {
 
