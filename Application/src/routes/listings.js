@@ -36,4 +36,36 @@ router.get('/', async (req,res)=>{
 
 })
 
+router.put('/:id', requireAuth, async (req, res) => {
+    try {
+        const listing = await listingRepository.updateListing(req.body, req.params.id)
+        if (!listing) return res.status(404).json({ error: 'Listing not found' })
+
+        // check if the person editing is the seller or an admin
+        if (listing.sellerId !== req.user.user_id && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'You can only edit your own listings' })
+        }
+
+        res.json(listing)
+    } catch(err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
+router.delete('/:id', requireAuth, async (req, res) => {
+    try {
+        const listing = await listingRepository.deleteListing(req.params.id)
+        if (!listing) return res.status(404).json({ error: 'Listing not found' })
+
+        // check if the person deleting is the seller or an admin
+        if (listing.sellerId !== req.user.user_id && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'You can only delete your own listings' })
+        }
+
+        res.json({ message: 'Listing deleted successfully' })
+    } catch(err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
 module.exports = router
