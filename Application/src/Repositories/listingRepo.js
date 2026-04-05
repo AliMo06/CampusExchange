@@ -75,6 +75,26 @@ class ListingRepository {
 
         return ListingFactory.createListing(result.rows[0]) //Return
     }
+
+    async searchListings(keyword) {
+
+    const query = `
+    SELECT *
+    FROM listings
+    WHERE status = 'active'
+    AND (
+        LOWER(title) LIKE LOWER($1)
+        OR LOWER(description) LIKE LOWER($1)
+    )
+    ORDER BY created_at DESC
+    `
+
+    const result = await db.query(query, [`%${keyword}%`])
+
+    return result.rows.map(row =>
+        ListingFactory.createListing(row)
+    )
+    }
 }
 
 module.exports = new ListingRepository()
