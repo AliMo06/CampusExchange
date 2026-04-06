@@ -68,4 +68,22 @@ router.delete('/:id', requireAuth, async (req, res) => {
     }
 })
 
+router.get('/search', async (req, res) => {
+
+    const { q } = req.query
+
+    try {
+
+        const results = await listingRepository.searchListings(q)
+
+        res.json(results)
+
+    } catch (err) {
+
+        res.status(500).json({ error: err.message })
+
+    }
+
+})
+
 module.exports = router
