@@ -38,15 +38,16 @@ router.get('/', async (req,res)=>{
 
 router.put('/:id', requireAuth, async (req, res) => {
     try {
-        const listing = await listingRepository.updateListing(req.body, req.params.id)
-        if (!listing) return res.status(404).json({ error: 'Listing not found' })
+        // fetch first, check ownership, then update
+        const existing = await listingRepository.getListingById(req.params.id)
+        if (!existing) return res.status(404).json({ error: 'Listing not found' })
 
-        // check if the person editing is the seller or an admin
-        if (listing.sellerId !== req.user.user_id && req.user.role !== 'admin') {
+        if (existing.sellerId !== req.user.user_id && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'You can only edit your own listings' })
         }
 
-        res.json(listing)
+        const updated = await listingRepository.updateListing(req.body, req.params.id)
+        res.json(updated)
     } catch(err) {
         res.status(500).json({ error: err.message })
     }
@@ -54,14 +55,15 @@ router.put('/:id', requireAuth, async (req, res) => {
 
 router.delete('/:id', requireAuth, async (req, res) => {
     try {
-        const listing = await listingRepository.deleteListing(req.params.id)
-        if (!listing) return res.status(404).json({ error: 'Listing not found' })
+        // fetch first, check ownership, then delete
+        const existing = await listingRepository.getListingById(req.params.id)
+        if (!existing) return res.status(404).json({ error: 'Listing not found' })
 
-        // check if the person deleting is the seller or an admin
-        if (listing.sellerId !== req.user.user_id && req.user.role !== 'admin') {
+        if (existing.sellerId !== req.user.user_id && req.user.role !== 'admin') {
             return res.status(403).json({ error: 'You can only delete your own listings' })
         }
 
+        await listingRepository.deleteListing(req.params.id)
         res.json({ message: 'Listing deleted successfully' })
     } catch(err) {
         res.status(500).json({ error: err.message })
