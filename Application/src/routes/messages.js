@@ -2,8 +2,10 @@ const router = require('express').Router()
 
 const messageRepo = require('../Repositories/messageRepo')
 
+const { requireAuth } = require('../Middleware/authMiddleware')
+
 // Send message
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
 
     try {
 
@@ -20,7 +22,7 @@ router.post('/', async (req, res) => {
 })
 
 // Get conversation
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
 
     const { listingId, user1, user2 } = req.query
 

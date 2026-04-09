@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const pool = require('../db')
+const db = require('../../../Data/db')
 
 // this will be called by your partner's registration route
 const hashPassword = async (password) => {

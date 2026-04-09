@@ -62,7 +62,7 @@ class UserRepository {
 
         //SQL Query that returns the updated user info
         const result = await db.query(
-            `UPDATE users SET ${setClause} WHERE id = $${fields.length + 1} RETURNING *`,
+            `UPDATE users SET ${setClause} WHERE user_id = $${fields.length + 1} RETURNING *`,
             [...values, userId]
         )
 
@@ -76,7 +76,7 @@ class UserRepository {
 
         //SQL query to delete user row based on userID
         const result = await db.query(
-            `DELETE FROM users WHERE id = $1 RETURNING *`,
+            `DELETE FROM users WHERE user_id = $1 RETURNING *`,
             [userId]
         )
 
