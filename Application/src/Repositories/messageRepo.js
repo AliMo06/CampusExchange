@@ -44,6 +44,41 @@ class MessageRepository {
         )
     }
 
+
+// mark all messages in a conversation as read for the receiver
+async markAsRead(listingId, receiverId) {
+    const query = `
+        UPDATE messages
+        SET is_read = true
+        WHERE listing_id = $1
+        AND receiver_id = $2
+        AND is_read = false
+        RETURNING *
+    `
+
+    const result = await db.query(query, [listingId, receiverId])
+    return result.rows.map(row => MessageFactory.createMessage(row))
+}
+
+// get all unique conversations for a user
+async getUserConversations(userId) {
+    const query = `
+        SELECT DISTINCT ON (listing_id, 
+            LEAST(sender_id, receiver_id), 
+            GREATEST(sender_id, receiver_id))
+            *
+        FROM messages
+        WHERE sender_id = $1 OR receiver_id = $1
+        ORDER BY listing_id, 
+            LEAST(sender_id, receiver_id), 
+            GREATEST(sender_id, receiver_id),
+            sent_at DESC
+    `
+
+    const result = await db.query(query, [userId])
+    return result.rows.map(row => MessageFactory.createMessage(row))
+}
+
 }
 
 module.exports = new MessageRepository()

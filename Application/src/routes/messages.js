@@ -2,8 +2,11 @@ const router = require('express').Router()
 
 const messageRepo = require('../Repositories/messageRepo')
 
+const { requireAuth } = require('../Middleware/authMiddleware')
+
+
 // Send message
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
 
     try {
 
@@ -20,7 +23,7 @@ router.post('/', async (req, res) => {
 })
 
 // Get conversation
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
 
     const { listingId, user1, user2 } = req.query
 
@@ -40,6 +43,17 @@ router.get('/', async (req, res) => {
 
     }
 
+})
+
+// mark messages as read in a conversation
+router.put('/read', requireAuth, async (req, res) => {
+    const { listingId } = req.body
+    try {
+        const updated = await messageRepo.markAsRead(listingId, req.user.user_id)
+        res.json({ message: 'Messages marked as read', updated })
+    } catch (err) {
+        res.status(500).json({ error: err.message })
+    }
 })
 
 module.exports = router
