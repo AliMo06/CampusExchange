@@ -70,4 +70,39 @@ router.delete('/:id', requireAuth, async (req, res) => {
     }
 })
 
+router.get('/search', async (req, res) => {
+
+    const { q } = req.query
+
+    try {
+
+        const results = await listingRepository.searchListings(q)
+
+        res.json(results)
+
+    } catch (err) {
+
+        res.status(500).json({ error: err.message })
+
+    }
+
+})
+
+router.get('/', async (req, res) => {
+    try {
+        const { category_id, condition, min_price, max_price } = req.query
+
+        // if any filters were passed, use filterListings, otherwise get all
+        if (category_id || condition || min_price || max_price) {
+            const listings = await listingRepository.filterListings(req.query)
+            return res.json(listings)
+        }
+
+        const listings = await listingRepository.getAllListings()
+        res.json(listings)
+    } catch(err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
 module.exports = router

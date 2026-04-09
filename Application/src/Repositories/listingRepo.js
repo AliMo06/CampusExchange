@@ -106,6 +106,48 @@ class ListingRepository {
             ListingFactory.createListing(row)
         )
     }
+
+    // filter active listings by category, price range, and/or condition
+    async filterListings(filters) {
+        const conditions = [`status = 'active'`]
+        const values = []
+        let i = 1
+
+        // add each filter only if it was actually passed in
+        if (filters.category_id) {
+            conditions.push(`category_id = $${i++}`)
+            values.push(filters.category_id)
+        }
+
+        if (filters.condition) {
+            conditions.push(`condition = $${i++}`)
+            values.push(filters.condition)
+        }
+
+        if (filters.min_price) {
+            conditions.push(`price >= $${i++}`)
+            values.push(filters.min_price)
+        }
+
+        if (filters.max_price) {
+            conditions.push(`price <= $${i++}`)
+            values.push(filters.max_price)
+        }
+
+        // build the full query dynamically based on what filters were passed
+        const query = `
+            SELECT * FROM listings
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY created_at DESC
+        `
+
+        const result = await db.query(query, values)
+        return result.rows.map(row => ListingFactory.createListing(row))
+    }
+    
+    
 }
+
+
 
 module.exports = new ListingRepository()
