@@ -13,7 +13,6 @@ const login = async (req, res) => {
 
   try {
     // check if user exists
-    const db = pool()
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email])
     const user = result.rows[0]
 

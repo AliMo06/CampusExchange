@@ -28,6 +28,7 @@ class UserRepository {
 
     }
 
+    //get a user by their email
     async getUserByEmail(email) {
 
         const result = await db.query(
@@ -83,6 +84,28 @@ class UserRepository {
         if(!results.rows.length) return null //If nothing was deleted, reutrn null
 
         return UserFactory.createUser(result.rows[0]) //Return
+    }
+
+     // suspend a user by setting is_active to false
+    async suspendUser(userId) {
+        const result = await db.query(
+            `UPDATE users SET is_active = false WHERE user_id = $1 RETURNING *`,
+            [userId]
+        )
+
+        if (!result.rows.length) return null
+        return UserFactory.createUser(result.rows[0])
+    }
+
+    // reactivate a suspended user
+    async unsuspendUser(userId) {
+        const result = await db.query(
+            `UPDATE users SET is_active = true WHERE user_id = $1 RETURNING *`,
+            [userId]
+        )
+
+        if (!result.rows.length) return null
+        return UserFactory.createUser(result.rows[0])
     }
 
 }

@@ -4,7 +4,7 @@ const messageRepo = require('../Repositories/messageRepo')
 
 const { requireAuth } = require('../Middleware/authMiddleware')
 
-// Send message
+// Send message (must be logged in)
 router.post('/', requireAuth, async (req, res) => {
 
     try {
@@ -42,6 +42,27 @@ router.get('/', requireAuth, async (req, res) => {
 
     }
 
+})
+
+// get all conversations for the logged in user
+router.get('/my-conversations', requireAuth, async (req, res) => {
+    try {
+        const conversations = await messageRepo.getUserConversations(req.user.user_id)
+        res.json(conversations)
+    } catch (err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
+// mark messages as read in a conversation
+router.put('/read', requireAuth, async (req, res) => {
+    const { listingId } = req.body
+    try {
+        const updated = await messageRepo.markAsRead(listingId, req.user.user_id)
+        res.json({ message: 'Messages marked as read', updated })
+    } catch (err) {
+        res.status(500).json({ error: err.message })
+    }
 })
 
 module.exports = router
