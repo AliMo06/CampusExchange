@@ -12,6 +12,7 @@ app.use('/api/auth', require('./routes/auth'))
 app.use('/api/listings', require('./routes/listings'))
 app.use('/api/messages', require('./routes/messages'))
 app.use('/reports', require('./routes/reports'))
+app.use('/api/users', require('./routes/users'))
 
 // Health check
 app.get('/', (req, res) => {

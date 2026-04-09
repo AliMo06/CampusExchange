@@ -1,9 +1,10 @@
 const db = require('../../../Data/db')
 const ListingFactory = require('../Services/listingFactory')
 
-//listing repo that can create listings and manage them
+// handles all database operations for listings
 class ListingRepository {
 
+    // insert a new listing into the database
     async createListing(listingData) {
 
         const listing = ListingFactory.createListing(listingData)
@@ -29,6 +30,7 @@ class ListingRepository {
 
     }
 
+    // get all active listings, newest first
     async getAllListings() {
 
         const result = await db.query(`
@@ -43,57 +45,66 @@ class ListingRepository {
 
     }
 
-    //Function to delete a listing
-    async deleteListing(id) {
-        const result = await db.query( //Delete and return deleted row to confirm deletion
-            `DELETE FROM listings WHERE id = $1 RETURNING *`,
+    // get a single listing by its id
+    async getListingById(id) {
+        const result = await db.query(
+            `SELECT * FROM listings WHERE listing_id = $1`,
             [id]
         )
 
-        if (!result.rows.length) return null //If there wasnt anything, return null
-
-        return ListingFactory.createListing(result.rows[0]) //Return
+        if (!result.rows.length) return null
+        return ListingFactory.createListing(result.rows[0])
     }
 
-    //Function to update a listing via id
+    // delete a listing by its id
+    async deleteListing(id) {
+        const result = await db.query(
+            `DELETE FROM listings WHERE listing_id = $1 RETURNING *`,
+            [id]
+        )
+
+        if (!result.rows.length) return null
+        return ListingFactory.createListing(result.rows[0])
+    }
+
+    // update a listing by its id with whatever fields are passed in
     async updateListing(listingData, id) {
         const fields = Object.keys(listingData)
         const values = Object.values(listingData)
 
-        //Map the fields to a string so that we can use it to acess the database and update proper values
+        // build the SET clause dynamically based on what fields were passed
         const setClause = fields
             .map((field, index) => `${field} = $${index + 1}`)
             .join(', ')
 
-        //SQL to update database, return updated info
         const result = await db.query(
-            `UPDATE listings SET ${setClause} WHERE id = $${fields.length + 1} RETURNING *`,
+            `UPDATE listings SET ${setClause} WHERE listing_id = $${fields.length + 1} RETURNING *`,
             [...values, id]
         )
 
-        if (!result.rows.length) return null //If there wasnt anything, return null
-
-        return ListingFactory.createListing(result.rows[0]) //Return
+        if (!result.rows.length) return null
+        return ListingFactory.createListing(result.rows[0])
     }
 
+    // search active listings by keyword in title or description
     async searchListings(keyword) {
 
-    const query = `
-    SELECT *
-    FROM listings
-    WHERE status = 'active'
-    AND (
-        LOWER(title) LIKE LOWER($1)
-        OR LOWER(description) LIKE LOWER($1)
-    )
-    ORDER BY created_at DESC
-    `
+        const query = `
+        SELECT *
+        FROM listings
+        WHERE status = 'active'
+        AND (
+            LOWER(title) LIKE LOWER($1)
+            OR LOWER(description) LIKE LOWER($1)
+        )
+        ORDER BY created_at DESC
+        `
 
-    const result = await db.query(query, [`%${keyword}%`])
+        const result = await db.query(query, [`%${keyword}%`])
 
-    return result.rows.map(row =>
-        ListingFactory.createListing(row)
-    )
+        return result.rows.map(row =>
+            ListingFactory.createListing(row)
+        )
     }
 }
 
