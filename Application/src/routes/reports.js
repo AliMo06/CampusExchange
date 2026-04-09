@@ -2,7 +2,10 @@ const router = require('express').Router()
 
 const reportRepo = require('../Repositories/reportRepo')
 
-router.post('/', async (req, res) => {
+const { requireAuth, requireRole } = require('../Middleware/authMiddleware')
+
+//create a report (must be logged in)
+router.post('/', requireAuth, async (req, res) => {
 
     try {
 
