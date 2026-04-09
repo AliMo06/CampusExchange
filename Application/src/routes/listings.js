@@ -86,4 +86,21 @@ router.get('/search', async (req, res) => {
 
 })
 
+router.get('/', async (req, res) => {
+    try {
+        const { category_id, condition, min_price, max_price } = req.query
+
+        // if any filters were passed, use filterListings, otherwise get all
+        if (category_id || condition || min_price || max_price) {
+            const listings = await listingRepository.filterListings(req.query)
+            return res.json(listings)
+        }
+
+        const listings = await listingRepository.getAllListings()
+        res.json(listings)
+    } catch(err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
 module.exports = router
