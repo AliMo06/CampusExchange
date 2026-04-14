@@ -1,4 +1,5 @@
 import { useState } from "react"
+import "./auth.css"
 
 function Login() {
   const [email, setEmail] = useState("")
@@ -21,37 +22,44 @@ function Login() {
       return
     }
 
-    // save the token so other pages can use it
     localStorage.setItem("token", data.token)
     localStorage.setItem("role", data.role)
-
-    // redirect to home after login
     window.location.href = "/home"
   }
 
   return (
-    <div className="page">
-      <h2>Log In</h2>
+    <div className="auth-wrapper">
+      <div className="auth-box">
+        <div className="logo-area">
+            <h1>Campus<span>Exchange</span></h1>
+            <p>University of Michigan Marketplace</p>
+        </div>
 
-      <input
-        type="email"
-        placeholder="University email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-      />
+        <h2>Welcome back</h2>
+        <p className="subtitle">Log in to your account</p>
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-      />
+        <input
+          type="email"
+          placeholder="University email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+        />
 
-      {error && <p className="error">{error}</p>}
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+        />
 
-      <button onClick={handleLogin}>Log In</button>
+        {error && <p className="error">{error}</p>}
 
-      <p>Don't have an account? <a href="/signup">Sign up</a></p>
+        <button onClick={handleLogin}>Log In</button>
+
+        <p className="bottom-link">
+          Don't have an account? <a href="/signup">Sign up</a>
+        </p>
+      </div>
     </div>
   )
 }

@@ -1,16 +1,15 @@
 import { useState } from "react"
+import "./auth.css"
 
 function Signup() {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
 
   async function handleSignup() {
     setError("")
 
-    // only allow umich emails
     if (!email.endsWith("@umich.edu")) {
       setError("You must use a @umich.edu email to sign up.")
       return
@@ -29,41 +28,49 @@ function Signup() {
       return
     }
 
-    setSuccess(true)
-    // redirect to login after signup
     window.location.href = "/login"
   }
 
   return (
-    <div className="page">
-      <h2>Sign Up</h2>
+    <div className="auth-wrapper">
+      <div className="auth-box">
+        <div className="logo-area">
+            <h1>Campus<span>Exchange</span></h1>
+            <p>University of Michigan Marketplace</p>
+        </div>
 
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={e => setUsername(e.target.value)}
-      />
+        <h2>Create an account</h2>
+        <p className="subtitle">Join your campus marketplace</p>
 
-      <input
-        type="email"
-        placeholder="@umich.edu email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-      />
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-      />
+        <input
+          type="email"
+          placeholder="@umich.edu email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+        />
 
-      {error && <p className="error">{error}</p>}
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+        />
 
-      <button onClick={handleSignup}>Sign Up</button>
+        {error && <p className="error">{error}</p>}
 
-      <p>Already have an account? <a href="/login">Log in</a></p>
+        <button onClick={handleSignup}>Sign Up</button>
+
+        <p className="bottom-link">
+          Already have an account? <a href="/login">Log in</a>
+        </p>
+      </div>
     </div>
   )
 }
