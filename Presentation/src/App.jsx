@@ -1,7 +1,8 @@
-import { useState, useEffect, Maps } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import Login from "./Pages/Login"
 import Signup from "./Pages/Signup"
+import Profile from "./Pages/Profile"
 import Navbar from './Pages/Navbar'
 import ListingCard from './Pages/ListingCard'
 
@@ -361,6 +362,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   )
