@@ -70,7 +70,9 @@ router.put('/:id', requireAuth, async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const listing = await listingRepository.getListingById(req.params.id)
-        if (!listing) return res.status(404).json({ error: 'Listing not found' })
+        if (!listing) {
+            return res.status(404).json({ error: 'Listing not found' })
+        }
         res.json(listing)
     } catch(err) {
         res.status(500).json({ error: err.message })

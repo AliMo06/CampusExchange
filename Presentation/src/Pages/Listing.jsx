@@ -15,7 +15,7 @@ export default function Listing() {
       try {
         setLoading(true)
         // IMPORTANT: See note below about this backend route!
-        const res = await fetch(`/api/listings/${id}`)
+        const res = await fetch(`http://localhost:3000/api/listings/${id}`)
         
         if (!res.ok) {
           throw new Error('Listing not found')
