@@ -2,3 +2,5 @@ npm init -y
 npm install express pg dotenv
 npm install bcrypt jsonwebtoken
 npm install nodemailer
+cd Presentation 
+npm install react-router-dom
