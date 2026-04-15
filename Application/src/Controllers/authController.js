@@ -33,7 +33,11 @@ const login = async (req, res) => {
       { expiresIn: '24h' }
     )
 
-    res.json({ token, role: user.role })
+    res.json({
+  token: token,
+  role: user.role,
+  user_id: user.user_id
+})
 
   } catch (err) {
     console.error(err)
