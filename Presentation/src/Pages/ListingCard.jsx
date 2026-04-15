@@ -12,6 +12,9 @@ export default function ListingCard({ listing, onClick }) {
   const [hovered, setHovered] = useState(false)
   const cond = CONDITION_COLORS[listing.condition] || CONDITION_COLORS.good
 
+  // Grab the first image from the array if it exists
+  const firstImage = listing.images && listing.images.length > 0 ? listing.images[0] : null;
+
   return (
     <div
       onClick={() => onClick && onClick(listing)}
@@ -43,9 +46,9 @@ export default function ListingCard({ listing, onClick }) {
         flexShrink: 0,
         overflow: 'hidden',
       }}>
-        {listing.imageUrl ? (
+        {firstImage ? (
           <img
-            src={listing.imageUrl}
+            src={firstImage}
             alt={listing.title}
             style={{
               position: 'absolute',

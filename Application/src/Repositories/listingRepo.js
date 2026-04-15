@@ -44,17 +44,15 @@ class ListingRepository {
 
     // get all active listings, newest first
     async getAllListings() {
-
         const result = await db.query(`
-        SELECT * FROM listings
-        WHERE status='active'
-        ORDER BY created_at DESC
+        SELECT l.*,
+            (SELECT json_agg(image_url) FROM listing_images WHERE listing_id = l.listing_id) as images
+        FROM listings l
+        WHERE l.status='active'
+        ORDER BY l.created_at DESC
         `)
 
-        return result.rows.map(row =>
-            ListingFactory.createListing(row)
-        )
-
+        return result.rows.map(row => ListingFactory.createListing(row))
     }
 
     // get a single listing by its id (UPDATED WITH JOIN)
@@ -156,9 +154,11 @@ class ListingRepository {
 
         // build the full query dynamically based on what filters were passed
         const query = `
-            SELECT * FROM listings
+            SELECT l.*,
+                (SELECT json_agg(image_url) FROM listing_images WHERE listing_id = l.listing_id) as images 
+            FROM listings l
             WHERE ${conditions.join(' AND ')}
-            ORDER BY created_at DESC
+            ORDER BY l.created_at DESC
         `
 
         const result = await db.query(query, values)
