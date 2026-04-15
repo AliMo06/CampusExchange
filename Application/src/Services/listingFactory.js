@@ -13,7 +13,10 @@ class ListingFactory {
             data.description,
             data.price,
             data.condition,
-            data.status || "active"
+            data.status || "active",
+            data.first_name || null,
+            data.last_name || null,
+            data.images || []
         )
 
     }

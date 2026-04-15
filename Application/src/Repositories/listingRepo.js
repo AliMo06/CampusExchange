@@ -26,8 +26,19 @@ class ListingRepository {
             listing.status
         ])
         
+        const newListing = result.rows[0];
 
-        return ListingFactory.createListing(result.rows[0])
+        // NEW: If an image_url was provided, insert it into the listing_images table
+        if (listingData.image_url && listingData.image_url.trim() !== '') {
+            await db.query(
+                `INSERT INTO listing_images (listing_id, image_url) VALUES ($1, $2)`,
+                [newListing.listing_id, listingData.image_url]
+            )
+            // Attach it so the frontend has it immediately
+            newListing.images = [listingData.image_url];
+        }
+
+        return ListingFactory.createListing(newListing)
 
     }
 
@@ -46,12 +57,20 @@ class ListingRepository {
 
     }
 
-    // get a single listing by its id
+    // get a single listing by its id (UPDATED WITH JOIN)
     async getListingById(id) {
-        const result = await db.query(
-            `SELECT * FROM listings WHERE listing_id = $1`,
-            [id]
-        )
+        const query = `
+            SELECT 
+                l.*,
+                u.first_name, 
+                u.last_name,
+                (SELECT json_agg(image_url) FROM listing_images WHERE listing_id = l.listing_id) as images
+            FROM listings l
+            JOIN users u ON l.seller_id = u.user_id
+            WHERE l.listing_id = $1;
+        `;
+
+        const result = await db.query(query, [id])
 
         if (!result.rows.length) return null
         return ListingFactory.createListing(result.rows[0])
@@ -146,9 +165,6 @@ class ListingRepository {
         return result.rows.map(row => ListingFactory.createListing(row))
     }
     
-    
 }
-
-
 
 module.exports = new ListingRepository()

@@ -21,8 +21,6 @@ function loadFonts() {
   }
 }
 
-// FIX 1: Category list matches the DB category_id values (index 0 = "All" is UI-only)
-// The IDs 1–6 correspond to the <option> values in the modal form below.
 const CATEGORIES = ['All', 'Textbooks', 'Electronics', 'Furniture', 'Appliances', 'Lab Supplies', 'Misc']
 
 // Maps category_id (integer from DB) → display name, used for filter matching
@@ -63,8 +61,9 @@ function HomePage() {
     price: '',
     condition: 'new',
     category_id: 1,
+    image_url: '',
   })
-  // FIX 2: Track submission state to prevent double-submits and give user feedback
+
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
@@ -88,9 +87,6 @@ function HomePage() {
     }
   }
 
-  // FIX 3: Category filter now uses CATEGORY_ID_MAP to convert the integer
-  // categoryId returned by the backend Listing class into a display name string,
-  // so pill filtering actually works instead of always returning no results.
   const filtered = listings.filter(l => {
     const matchSearch =
       search.trim() === '' ||
@@ -118,7 +114,6 @@ function HomePage() {
       return
     }
 
-    // FIX 4: Validate that price is a positive number before sending
     const priceVal = parseFloat(newListing.price)
     if (isNaN(priceVal) || priceVal < 0) {
       setSubmitError('Please enter a valid price.')
@@ -133,24 +128,17 @@ function HomePage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        // FIX 5: Do NOT send seller_id from the frontend. The backend should
-        // derive it from req.user (the decoded JWT), not trust the client.
-        // If your backend currently reads seller_id from req.body, update
-        // listingRepo to use req.user.user_id instead. Sending it from the
-        // client is a security hole — any user could spoof another's ID.
+
         body: JSON.stringify({
-          // seller_id is intentionally omitted — set it server-side from JWT
           category_id: parseInt(newListing.category_id, 10),
           title: newListing.title.trim(),
           description: newListing.description.trim(),
           price: priceVal,
           condition: newListing.condition,
+          image_url: newListing.image_url
         }),
       })
 
-      // FIX 6: Read the body once. Previously the code called res.text() inside
-      // the error branch after already attempting res.json() in the success path,
-      // which throws "body already used". Read text first, then parse.
       const raw = await res.text()
       if (!res.ok) {
         throw new Error(`${res.status}: ${raw}`)
@@ -158,9 +146,6 @@ function HomePage() {
 
       const createdListing = JSON.parse(raw)
 
-      // FIX 7: The Listing class uses camelCase (listingId, sellerId…).
-      // The response is already a Listing instance serialised to JSON, so
-      // listingId is the correct key — no snake_case mismatch here.
       setListings(prev => [createdListing, ...prev])
       setShowCreateModal(false)
       setNewListing({ title: '', description: '', price: '', condition: 'new', category_id: 1 })
@@ -172,7 +157,6 @@ function HomePage() {
     }
   }
 
-  // FIX 8: listingId is camelCase (from Listing class), not listing_id
   const handleCardClick = (listing) => {
     navigate(`/listing/${listing.listingId}`)
   }
@@ -337,6 +321,13 @@ function HomePage() {
                 value={newListing.description}
                 onChange={e => setNewListing({ ...newListing, description: e.target.value })}
                 style={{ ...inputStyle, resize: 'vertical' }}
+              />
+
+              <input
+                type="url" placeholder="Image URL (optional)"
+                value={newListing.image_url}
+                onChange={e => setNewListing({ ...newListing, image_url: e.target.value })}
+                style={inputStyle}
               />
 
               <div style={{ display: 'flex', gap: '1rem' }}>

@@ -8,15 +8,15 @@ const { requireAuth, requireRole } = require('../Middleware/authMiddleware')
 router.post('/', requireAuth, async (req,res)=>{
 
     try {
+        // Force seller_id to be the authenticated user's ID
+        req.body.seller_id = req.user.user_id; 
 
         const listing = await listingRepository.createListing(req.body)
 
         res.json(listing)
 
     } catch(err){
-
         res.status(500).json({error: err.message})
-
     }
 
 })
