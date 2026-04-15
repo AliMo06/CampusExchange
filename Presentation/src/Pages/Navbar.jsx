@@ -1,7 +1,6 @@
 import { useState } from 'react'
 
 export default function Navbar({ user, onLogin, onSignup, onCreateListing }) {
-  const [avatarError, setAvatarError] = useState(false)
 
   return (
     <nav style={{
@@ -68,59 +67,41 @@ export default function Navbar({ user, onLogin, onSignup, onCreateListing }) {
       {/* Right: Auth */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         {user ? (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.65rem',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '40px',
-            padding: '0.3rem 0.75rem 0.3rem 0.3rem',
-            cursor: 'pointer',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-          >
-            {user.profilePic && !avatarError ? (
-              <img
-                src={user.profilePic}
-                alt={user.username}
-                onError={() => setAvatarError(true)}
-                style={{
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid rgba(245,166,35,0.5)',
-                }}
-              />
-            ) : (
-              <div style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #F5A623, #E8831A)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'DM Mono', monospace",
-                fontWeight: '700',
-                fontSize: '0.85rem',
-                color: '#1a0e00',
-                flexShrink: 0,
-              }}>
-                {user.username?.[0]?.toUpperCase() || 'U'}
-              </div>
-            )}
-            <span style={{
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #F5A623, #E8831A)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               fontFamily: "'DM Mono', monospace",
-              fontSize: '0.8rem',
-              color: 'rgba(255,255,255,0.85)',
-              fontWeight: '500',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              color: '#1a0e00',
+              flexShrink: 0,
             }}>
-              {user.username}
-            </span>
+              {user.username?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <button
+              onClick={() => {
+                localStorage.clear()
+                window.location.href = '/login'
+              }}
+              style={{
+                background: 'transparent',
+                color: 'rgba(255,255,255,0.5)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '6px',
+                padding: '0.4rem 0.8rem',
+                fontFamily: "'DM Mono', monospace",
+                fontSize: '0.72rem',
+                cursor: 'pointer',
+              }}
+            >
+              Log out
+            </button>
           </div>
         ) : (
           <>

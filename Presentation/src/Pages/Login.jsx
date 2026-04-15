@@ -16,9 +16,6 @@ function Login() {
     })
 
     const data = await res.json()
-    
-    // ADD THIS LINE RIGHT HERE:
-    console.log("BACKEND LOGIN DATA:", data)
 
     if (!res.ok) {
       setError(data.error)
@@ -27,7 +24,8 @@ function Login() {
 
     localStorage.setItem("token", data.token)
     localStorage.setItem("role", data.role)
-    localStorage.setItem("userId", data.user_id)
+    localStorage.setItem("userId", data.userId)
+    localStorage.setItem("email", email)
     window.location.href = "/"
   }
 

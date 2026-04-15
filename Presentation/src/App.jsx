@@ -37,7 +37,18 @@ const CATEGORY_ID_MAP = {
 
 function HomePage() {
   const navigate = useNavigate()
-  const [user, setUser] = useState(null) // Populate when user logs in
+  const [user, setUser] = useState(() => {
+  const token = localStorage.getItem('token')
+  if (!token) return null
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const email = localStorage.getItem('email') || ''
+    const initial = email.charAt(0).toUpperCase() || 'U'
+    return { token, role: payload.role, user_id: payload.user_id, username: initial }
+  } catch {
+    return null
+  }
+})
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
