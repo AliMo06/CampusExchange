@@ -66,6 +66,17 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
 })
 
+// Get a single listing by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const listing = await listingRepository.getListingById(req.params.id)
+        if (!listing) return res.status(404).json({ error: 'Listing not found' })
+        res.json(listing)
+    } catch(err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
 // delete a listing - only the seller or an admin can do this
 router.delete('/:id', requireAuth, async (req, res) => {
     try {

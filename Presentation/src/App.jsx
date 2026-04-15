@@ -5,6 +5,7 @@ import Signup from "./Pages/Signup"
 import Profile from "./Pages/Profile"
 import Navbar from './Pages/Navbar'
 import ListingCard from './Pages/ListingCard'
+import Listing from './Pages/Listing'
 
 // ─── Google Fonts loader ──────────────────────────────────────────────────────
 const FONTS_HREF =
@@ -120,7 +121,8 @@ function HomePage() {
   }
 
   const handleCardClick = (listing) => {
-    alert(`Open listing: ${listing.title}`)
+    // Make sure 'listingId' matches exactly how it comes back from your DB
+    navigate(`/listing/${listing.listingId}`) 
   }
 
   return (
@@ -387,6 +389,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/listing/:id" element={<Listing />} />
       </Routes>
     </BrowserRouter>
   )
