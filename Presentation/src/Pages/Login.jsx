@@ -25,6 +25,7 @@ function Login() {
     localStorage.setItem("token", data.token)
     localStorage.setItem("role", data.role)
     localStorage.setItem("userId", data.userId)
+    localStorage.setItem("email", email)
     window.location.href = "/"
   }
 
