@@ -1,24 +1,26 @@
 const router = require('express').Router()
-
 const userRepository = require('../Repositories/userRepo')
-
 const { requireAuth, requireRole } = require('../Middleware/authMiddleware')
+const bcrypt = require('bcrypt')
 
-//register a new user (public)
-router.post('/register', async (req,res) => {
-
+// register a new user - public
+router.post('/register', async (req, res) => {
     try {
+        const { username, email, password } = req.body
 
-        const user = await userRepository.createUser(req.body)
+        // hash the password before saving
+        const salt = await bcrypt.genSalt(10)
+        const password_hash = await bcrypt.hash(password, salt)
+
+        const user = await userRepository.createUser({
+            ...req.body,
+            password_hash
+        })
 
         res.json(user)
-
     } catch(err) {
-
-        res.status(500).json({error: err.message})
-
+        res.status(500).json({ error: err.message })
     }
-
 })
 
 // get all users - admin only
@@ -63,6 +65,5 @@ router.delete('/:id', requireAuth, requireRole('admin'), async (req, res) => {
         res.status(500).json({ error: err.message })
     }
 })
-
 
 module.exports = router
