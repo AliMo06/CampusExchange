@@ -36,7 +36,7 @@ const login = async (req, res) => {
     res.json({
   token: token,
   role: user.role,
-  user_id: user.user_Id
+  user_id: user.user_id
 })
 
   } catch (err) {
