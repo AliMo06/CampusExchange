@@ -1,6 +1,8 @@
-npm init -y
-npm install express pg dotenv
-npm install bcrypt jsonwebtoken
-npm install nodemailer
-cd Presentation 
-npm install react-router-dom
+in root:
+    npm init -y
+    npm install express pg dotenv
+    npm install bcrypt jsonwebtoken
+    npm install nodemailer
+in Presentation folder(cd Presentation) 
+    npm install
+    npm install react-router-dom

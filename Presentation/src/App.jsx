@@ -6,6 +6,7 @@ import Profile from "./Pages/Profile"
 import Navbar from './Pages/Navbar'
 import ListingCard from './Pages/ListingCard'
 import Listing from './Pages/Listing'
+import Messages from './Pages/Messages'
 
 // ─── Google Fonts loader ──────────────────────────────────────────────────────
 const FONTS_HREF =
@@ -471,6 +472,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/listing/:id" element={<Listing />} />
+        <Route path="/messages/new" element={<Messages />} />
       </Routes>
     </BrowserRouter>
   )

@@ -103,7 +103,7 @@ export default function Listing() {
               </div>
 
               <button 
-                onClick={() => navigate(`/messages/new?seller=${listing.seller_id}&listing=${listing.listing_id}`)}
+                onClick={() => navigate(`/messages/new?seller=${listing.sellerId}&listing=${listing.listingId}`)}
                 style={{
                   width: '100%', padding: '1rem', background: '#F5A623', color: '#000', border: 'none',
                   borderRadius: '8px', fontFamily: "'DM Mono', monospace", fontSize: '1rem', fontWeight: 'bold',

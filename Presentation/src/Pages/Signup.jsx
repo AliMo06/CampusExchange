@@ -5,6 +5,8 @@ function Signup() {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [firstname, setFirst] = useState("")
+  const [lastname, setLast] = useState("")
   const [error, setError] = useState("")
 
   async function handleSignup() {
@@ -18,7 +20,7 @@ function Signup() {
     const res = await fetch("http://localhost:3000/api/users/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify({ username, email, password, firstname, lastname })
     })
 
     const data = await res.json()
@@ -41,6 +43,20 @@ function Signup() {
 
         <h2>Create an account</h2>
         <p className="subtitle">Join your campus marketplace</p>
+
+        <input
+          type="text"
+          placeholder="First name"
+          value={firstname}
+          onChange={e => setFirst(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Last name"
+          value={lastname}
+          onChange={e => setLast(e.target.value)}
+        />
 
         <input
           type="text"
