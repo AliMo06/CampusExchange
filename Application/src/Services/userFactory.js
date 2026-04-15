@@ -1,6 +1,5 @@
 const User = require('../Middleware/User')
 
-//user factory that creates a new user utilizing the user model
 class UserFactory {
 
     static createUser(data) {
@@ -12,7 +11,9 @@ class UserFactory {
             data.first_name,
             data.last_name,
             data.role || "student",
-            data.campus_id
+            data.campus_id,
+            data.bio,
+            data.is_active
         )
 
     }

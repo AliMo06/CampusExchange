@@ -67,10 +67,10 @@ export default function Navbar({ user, onLogin, onSignup, onCreateListing }) {
       {/* Right: Auth */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         {user ? (
-          <div 
-          onClick={() => window.location.href = '/profile'}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div 
+              onClick={() => window.location.href = '/profile'}
+              style={{
               width: '34px',
               height: '34px',
               borderRadius: '50%',
