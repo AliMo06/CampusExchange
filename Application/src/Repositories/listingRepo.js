@@ -25,6 +25,7 @@ class ListingRepository {
             listing.condition,
             listing.status
         ])
+        
 
         return ListingFactory.createListing(result.rows[0])
 

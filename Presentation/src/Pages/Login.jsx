@@ -17,9 +17,6 @@ function Login() {
 
     const data = await res.json()
     
-    // ADD THIS LINE RIGHT HERE:
-    console.log("BACKEND LOGIN DATA:", data)
-
     if (!res.ok) {
       setError(data.error)
       return
