@@ -27,6 +27,18 @@ CREATE TABLE categories (
     name VARCHAR(100) UNIQUE NOT NULL
 );
 
+INSERT INTO categories (category_id, name) VALUES 
+(1, 'Textbooks'),
+(2, 'Electronics'),
+(3, 'Furniture'),
+(4, 'Appliances'),
+(5, 'Lab Supplies'),
+(6, 'Misc');
+
+-- Optional: Since we manually inserted IDs, we should reset the serial sequence
+-- so future categories (if you add them) start at ID 7.
+SELECT setval('categories_category_id_seq', (SELECT MAX(category_id) FROM categories));
+
 CREATE TABLE listings (
     listing_id SERIAL PRIMARY KEY,
     seller_id INT REFERENCES users(user_id) ON DELETE CASCADE,

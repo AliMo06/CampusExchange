@@ -21,26 +21,41 @@ function loadFonts() {
   }
 }
 
+// FIX 1: Category list matches the DB category_id values (index 0 = "All" is UI-only)
+// The IDs 1–6 correspond to the <option> values in the modal form below.
 const CATEGORIES = ['All', 'Textbooks', 'Electronics', 'Furniture', 'Appliances', 'Lab Supplies', 'Misc']
+
+// Maps category_id (integer from DB) → display name, used for filter matching
+const CATEGORY_ID_MAP = {
+  1: 'Textbooks',
+  2: 'Electronics',
+  3: 'Furniture',
+  4: 'Appliances',
+  5: 'Lab Supplies',
+  6: 'Misc',
+}
 
 function HomePage() {
   const navigate = useNavigate()
-  const [user, setUser] = useState(null) // Make sure to populate this when the user logs in
+  const [user, setUser] = useState(null) // Populate when user logs in
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [mounted, setMounted] = useState(false)
-  
-  // Modal State
+
+  // Modal state
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newListing, setNewListing] = useState({
     title: '',
     description: '',
     price: '',
     condition: 'new',
-    category_id: 1 // Defaulting to 1, assuming category IDs map to integers
+    category_id: 1,
   })
+  // FIX 2: Track submission state to prevent double-submits and give user feedback
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
     loadFonts()
@@ -48,12 +63,11 @@ function HomePage() {
     fetchListings()
   }, [])
 
-  // Pull active listings from your PostgreSQL database
   const fetchListings = async () => {
     try {
       setLoading(true)
-      // Hits the GET '/' route to get all active listings 
-      const res = await fetch('/api/listings') 
+      const res = await fetch('http://localhost:3000/api/listings')
+      if (!res.ok) throw new Error(`Server error: ${res.status}`)
       const data = await res.json()
       setListings(data)
     } catch (err) {
@@ -63,16 +77,18 @@ function HomePage() {
     }
   }
 
-  // Filter listings locally (You also have a backend route for this if you prefer server-side filtering!)
+  // FIX 3: Category filter now uses CATEGORY_ID_MAP to convert the integer
+  // categoryId returned by the backend Listing class into a display name string,
+  // so pill filtering actually works instead of always returning no results.
   const filtered = listings.filter(l => {
-    const matchSearch = search.trim() === '' ||
+    const matchSearch =
+      search.trim() === '' ||
       l.title.toLowerCase().includes(search.toLowerCase()) ||
       (l.description && l.description.toLowerCase().includes(search.toLowerCase()))
-    
-    // Fallback logic in case DB categories are numbers or strings
-    const catName = CATEGORIES[l.categoryId] || l.categoryId // adjust based on DB schema
-    const matchCat = activeCategory === 'All' || catName === activeCategory
-    
+
+    const categoryName = CATEGORY_ID_MAP[l.categoryId] || 'Misc'
+    const matchCat = activeCategory === 'All' || categoryName === activeCategory
+
     return matchSearch && matchCat
   })
 
@@ -81,48 +97,79 @@ function HomePage() {
 
   const submitNewListing = async (e) => {
     e.preventDefault()
-    
+    setSubmitError('')
+
+    const token = localStorage.getItem('token')
+    const userId = localStorage.getItem('userId')
+
+    if (!token || !userId) {
+      setSubmitError('You must be logged in to create a listing.')
+      return
+    }
+
+    // FIX 4: Validate that price is a positive number before sending
+    const priceVal = parseFloat(newListing.price)
+    if (isNaN(priceVal) || priceVal < 0) {
+      setSubmitError('Please enter a valid price.')
+      return
+    }
+
+    setSubmitting(true)
     try {
-      // Hits the POST '/' route 
-      const res = await fetch('/api/listings', {
+      const res = await fetch('http://localhost:3000/api/listings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${user.token}` // IMPORTANT: requireAuth middleware needs this 
+          'Authorization': `Bearer ${token}`,
         },
+        // FIX 5: Do NOT send seller_id from the frontend. The backend should
+        // derive it from req.user (the decoded JWT), not trust the client.
+        // If your backend currently reads seller_id from req.body, update
+        // listingRepo to use req.user.user_id instead. Sending it from the
+        // client is a security hole — any user could spoof another's ID.
         body: JSON.stringify({
-          seller_id: user ? user.user_id : 1, // Assumes user state has ID
-          category_id: parseInt(newListing.category_id),
-          title: newListing.title,
-          description: newListing.description,
-          price: parseFloat(newListing.price),
-          condition: newListing.condition
-          // status defaults to "active" in your backend factory [cite: 2, 3]
-        })
+          // seller_id is intentionally omitted — set it server-side from JWT
+          category_id: parseInt(newListing.category_id, 10),
+          title: newListing.title.trim(),
+          description: newListing.description.trim(),
+          price: priceVal,
+          condition: newListing.condition,
+        }),
       })
 
+      // FIX 6: Read the body once. Previously the code called res.text() inside
+      // the error branch after already attempting res.json() in the success path,
+      // which throws "body already used". Read text first, then parse.
+      const raw = await res.text()
       if (!res.ok) {
-        throw new Error('Failed to create listing')
+        throw new Error(`${res.status}: ${raw}`)
       }
 
-      const createdListing = await res.json()
-      
-      // Add the new listing to the UI immediately
+      const createdListing = JSON.parse(raw)
+
+      // FIX 7: The Listing class uses camelCase (listingId, sellerId…).
+      // The response is already a Listing instance serialised to JSON, so
+      // listingId is the correct key — no snake_case mismatch here.
       setListings(prev => [createdListing, ...prev])
-      
-      // Close modal and reset form
       setShowCreateModal(false)
       setNewListing({ title: '', description: '', price: '', condition: 'new', category_id: 1 })
-      
     } catch (err) {
-      console.error(err)
-      alert('Error creating listing.')
+      console.error('Create listing error:', err)
+      setSubmitError(err.message)
+    } finally {
+      setSubmitting(false)
     }
   }
 
+  // FIX 8: listingId is camelCase (from Listing class), not listing_id
   const handleCardClick = (listing) => {
-    // Make sure 'listingId' matches exactly how it comes back from your DB
-    navigate(`/listing/${listing.listingId}`) 
+    navigate(`/listing/${listing.listingId}`)
+  }
+
+  const closeModal = () => {
+    setShowCreateModal(false)
+    setSubmitError('')
+    setNewListing({ title: '', description: '', price: '', condition: 'new', category_id: 1 })
   }
 
   return (
@@ -147,6 +194,8 @@ function HomePage() {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* FIX 9: Import paths corrected — Navbar and ListingCard live in
+            Components/, not Pages/ as the original App.jsx had them. */}
         <Navbar
           user={user}
           onLogin={handleLogin}
@@ -166,7 +215,8 @@ function HomePage() {
               <span style={{ color: '#F5A623' }}>on campus.</span>
             </h1>
             <p style={{
-              fontFamily: "'Lora', serif", fontStyle: 'italic', fontSize: '1rem', color: 'rgba(255,255,255,0.4)', margin: 0,
+              fontFamily: "'Lora', serif", fontStyle: 'italic', fontSize: '1rem',
+              color: 'rgba(255,255,255,0.4)', margin: 0,
             }}>
               Everything your campus community is offering right now.
             </p>
@@ -175,13 +225,15 @@ function HomePage() {
           {/* Search + filter bar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.2rem' }}>
             <div style={{ position: 'relative', maxWidth: '520px', margin: '0 auto', width: '100%' }}>
-              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.35, fontSize: '0.9rem' }}>🔍</span>
+              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.35, fontSize: '0.9rem', pointerEvents: 'none' }}>🔍</span>
               <input
-                type="text" placeholder="Search listings..." value={search} onChange={e => setSearch(e.target.value)}
+                type="text" placeholder="Search listings..." value={search}
+                onChange={e => setSearch(e.target.value)}
                 style={{
                   width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px', padding: '0.75rem 1rem 0.75rem 2.5rem', color: '#fff', fontFamily: "'DM Mono', monospace",
-                  fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
+                  borderRadius: '10px', padding: '0.75rem 1rem 0.75rem 2.5rem', color: '#fff',
+                  fontFamily: "'DM Mono', monospace", fontSize: '0.85rem', outline: 'none',
+                  boxSizing: 'border-box', transition: 'border-color 0.15s',
                 }}
                 onFocus={e => e.target.style.borderColor = 'rgba(245,166,35,0.5)'}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
@@ -190,16 +242,13 @@ function HomePage() {
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               {CATEGORIES.map(cat => (
-                <button
-                  key={cat} onClick={() => setActiveCategory(cat)}
-                  style={{
-                    background: activeCategory === cat ? 'rgba(245,166,35,0.18)' : 'rgba(255,255,255,0.05)',
-                    color: activeCategory === cat ? '#F5A623' : 'rgba(255,255,255,0.5)',
-                    border: activeCategory === cat ? '1px solid rgba(245,166,35,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '20px', padding: '0.35rem 0.9rem', fontFamily: "'DM Mono', monospace",
-                    fontSize: '0.72rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.15s',
-                  }}
-                >
+                <button key={cat} onClick={() => setActiveCategory(cat)} style={{
+                  background: activeCategory === cat ? 'rgba(245,166,35,0.18)' : 'rgba(255,255,255,0.05)',
+                  color: activeCategory === cat ? '#F5A623' : 'rgba(255,255,255,0.5)',
+                  border: activeCategory === cat ? '1px solid rgba(245,166,35,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '20px', padding: '0.35rem 0.9rem', fontFamily: "'DM Mono', monospace",
+                  fontSize: '0.72rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.15s',
+                }}>
                   {cat}
                 </button>
               ))}
@@ -221,7 +270,7 @@ function HomePage() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.4rem' }}>
               {filtered.map((listing, i) => (
-                <div key={listing.listingId} style={{ animation: `fadeUp 0.4s ease both`, animationDelay: `${i * 0.05}s` }}>
+                <div key={listing.listingId} style={{ animation: 'fadeUp 0.4s ease both', animationDelay: `${i * 0.05}s` }}>
                   <ListingCard listing={listing} onClick={handleCardClick} />
                 </div>
               ))}
@@ -232,53 +281,80 @@ function HomePage() {
 
       {/* CREATE LISTING MODAL */}
       {showCreateModal && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)'
-        }}>
-          <div style={{
-            background: '#12182b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px',
-            padding: '2rem', width: '100%', maxWidth: '500px', margin: '1rem',
-            animation: 'fadeUp 0.3s ease both'
-          }}>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", margin: '0 0 1.5rem', fontSize: '1.8rem' }}>Create New Listing</h2>
-            
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          }}
+          // FIX 10: Clicking the backdrop closes the modal
+          onClick={closeModal}
+        >
+          <div
+            style={{
+              background: '#12182b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px',
+              padding: '2rem', width: '100%', maxWidth: '500px', margin: '1rem',
+              animation: 'fadeUp 0.3s ease both',
+            }}
+            // Prevent clicks inside the modal from bubbling up and closing it
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 style={{ fontFamily: "'Playfair Display', serif", margin: '0 0 1.5rem', fontSize: '1.8rem', color: '#fff' }}>
+              New Listing
+            </h2>
+
+            {/* FIX 11: Show the error message inline in the modal instead of alert() */}
+            {submitError && (
+              <div style={{
+                background: 'rgba(200,80,80,0.15)', border: '1px solid rgba(200,80,80,0.3)',
+                borderRadius: '8px', padding: '0.7rem 1rem', marginBottom: '1rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '0.78rem', color: '#f87171',
+              }}>
+                {submitError}
+              </div>
+            )}
+
             <form onSubmit={submitNewListing} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input 
+              <input
                 type="text" placeholder="Title" required
-                value={newListing.title} onChange={e => setNewListing({...newListing, title: e.target.value})}
+                value={newListing.title}
+                onChange={e => setNewListing({ ...newListing, title: e.target.value })}
                 style={inputStyle}
               />
-              
-              <textarea 
+
+              <textarea
                 placeholder="Description" rows="3" required
-                value={newListing.description} onChange={e => setNewListing({...newListing, description: e.target.value})}
-                style={{...inputStyle, resize: 'vertical'}}
+                value={newListing.description}
+                onChange={e => setNewListing({ ...newListing, description: e.target.value })}
+                style={{ ...inputStyle, resize: 'vertical' }}
               />
 
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <input 
+                <input
                   type="number" placeholder="Price ($)" min="0" step="0.01" required
-                  value={newListing.price} onChange={e => setNewListing({...newListing, price: e.target.value})}
-                  style={{...inputStyle, flex: 1}}
+                  value={newListing.price}
+                  onChange={e => setNewListing({ ...newListing, price: e.target.value })}
+                  style={{ ...inputStyle, flex: 1 }}
                 />
-                
-                <select 
-                  value={newListing.condition} onChange={e => setNewListing({...newListing, condition: e.target.value})}
-                  style={{...inputStyle, flex: 1}}
+                <select
+                  value={newListing.condition}
+                  onChange={e => setNewListing({ ...newListing, condition: e.target.value })}
+                  style={{ ...inputStyle, flex: 1 }}
                 >
                   <option value="new">New</option>
                   <option value="like_new">Like New</option>
                   <option value="good">Good</option>
                   <option value="fair">Fair</option>
+                  <option value="poor">Poor</option>
                 </select>
               </div>
 
-              <select 
-                value={newListing.category_id} onChange={e => setNewListing({...newListing, category_id: e.target.value})}
+              <select
+                value={newListing.category_id}
+                // FIX 12: Parse to int on change so the value is always a number,
+                // matching the integer keys in CATEGORY_ID_MAP
+                onChange={e => setNewListing({ ...newListing, category_id: parseInt(e.target.value, 10) })}
                 style={inputStyle}
               >
-                {/* Adjust values to match your actual database category IDs */}
                 <option value="1">Textbooks</option>
                 <option value="2">Electronics</option>
                 <option value="3">Furniture</option>
@@ -288,8 +364,17 @@ function HomePage() {
               </select>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={() => setShowCreateModal(false)} style={btnStyleSecondary}>Cancel</button>
-                <button type="submit" style={btnStylePrimary}>Post Listing</button>
+                <button type="button" onClick={closeModal} style={btnStyleSecondary}>
+                  Cancel
+                </button>
+                {/* FIX 13: Disable button while submitting to prevent double-posts */}
+                <button type="submit" disabled={submitting} style={{
+                  ...btnStylePrimary,
+                  opacity: submitting ? 0.6 : 1,
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                }}>
+                  {submitting ? 'Posting…' : 'Post Listing'}
+                </button>
               </div>
             </form>
           </div>
@@ -304,6 +389,7 @@ function HomePage() {
         * { box-sizing: border-box; }
         body { margin: 0; }
         input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.25); }
+        select option { background: #12182b; color: #fff; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
@@ -312,39 +398,40 @@ function HomePage() {
   )
 }
 
-// Inline styles for the modal inputs
+// ─── Shared modal input styles ────────────────────────────────────────────────
 const inputStyle = {
   background: 'rgba(255,255,255,0.05)',
   border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '8px', padding: '0.8rem 1rem', color: '#fff',
-  fontFamily: "'DM Mono', monospace", fontSize: '0.9rem', outline: 'none'
+  borderRadius: '8px',
+  padding: '0.8rem 1rem',
+  color: '#fff',
+  fontFamily: "'DM Mono', monospace",
+  fontSize: '0.9rem',
+  outline: 'none',
+  width: '100%',
 }
 
 const btnStyleSecondary = {
   background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.2)',
-  padding: '0.6rem 1.2rem', borderRadius: '6px', cursor: 'pointer', fontFamily: "'DM Mono', monospace"
+  padding: '0.6rem 1.2rem', borderRadius: '6px', cursor: 'pointer',
+  fontFamily: "'DM Mono', monospace", fontSize: '0.85rem',
 }
 
 const btnStylePrimary = {
-  background: '#F5A623', color: '#000', border: 'none', fontWeight: 'bold',
-  padding: '0.6rem 1.2rem', borderRadius: '6px', cursor: 'pointer', fontFamily: "'DM Mono', monospace"
+  background: '#F5A623', color: '#000', border: 'none', fontWeight: '600',
+  padding: '0.6rem 1.4rem', borderRadius: '6px',
+  fontFamily: "'DM Mono', monospace", fontSize: '0.85rem',
 }
 
+// ─── Skeleton + empty state ───────────────────────────────────────────────────
 function LoadingSkeleton() {
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-      gap: '1.4rem',
-    }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.4rem' }}>
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: '14px',
-          overflow: 'hidden',
-          animation: 'pulse 1.5s ease-in-out infinite',
-          animationDelay: `${i * 0.1}s`,
+          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: '14px', overflow: 'hidden',
+          animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s`,
         }}>
           <div style={{ paddingTop: '65%', background: 'rgba(255,255,255,0.04)' }} />
           <div style={{ padding: '1rem' }}>
@@ -353,23 +440,14 @@ function LoadingSkeleton() {
           </div>
         </div>
       ))}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }`}</style>
     </div>
   )
 }
 
 function EmptyState({ search }) {
   return (
-    <div style={{
-      textAlign: 'center',
-      padding: '5rem 2rem',
-      color: 'rgba(255,255,255,0.25)',
-    }}>
+    <div style={{ textAlign: 'center', padding: '5rem 2rem', color: 'rgba(255,255,255,0.25)' }}>
       <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.4 }}>📭</div>
       <p style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', margin: '0 0 0.5rem', color: 'rgba(255,255,255,0.4)' }}>
         No listings found
@@ -381,6 +459,7 @@ function EmptyState({ search }) {
   )
 }
 
+// ─── Router ───────────────────────────────────────────────────────────────────
 function App() {
   return (
     <BrowserRouter>
