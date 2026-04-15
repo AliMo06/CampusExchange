@@ -66,4 +66,30 @@ router.delete('/:id', requireAuth, requireRole('admin'), async (req, res) => {
     }
 })
 
+
+// get a single user's profile by id - must be logged in
+router.get('/:id', requireAuth, async (req, res) => {
+    try {
+        const user = await userRepository.getUserById(req.params.id)
+        if (!user) return res.status(404).json({ error: 'User not found' })
+        res.json(user)
+    } catch(err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
+// update bio - must be logged in and be the same user
+router.put('/:id/bio', requireAuth, async (req, res) => {
+    try {
+        if (req.user.user_id !== parseInt(req.params.id)) {
+            return res.status(403).json({ error: 'You can only edit your own profile' })
+        }
+        const user = await userRepository.updateUser(req.params.id, { bio: req.body.bio })
+        res.json(user)
+    } catch(err) {
+        res.status(500).json({ error: err.message })
+    }
+})
+
+
 module.exports = router

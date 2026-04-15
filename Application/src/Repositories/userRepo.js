@@ -42,6 +42,15 @@ class UserRepository {
 
     }
 
+    async getUserById(userId) {
+    const result = await db.query(
+        `SELECT * FROM users WHERE user_id = $1`,
+        [userId]
+    )
+    if (!result.rows.length) return null
+    return UserFactory.createUser(result.rows[0])
+    } 
+
     //Function to pull all users from the database, 
     async getAllUsers() {
         const result = await db.query(

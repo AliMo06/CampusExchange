@@ -1,7 +1,6 @@
-//user class model for easy factory implementation
 class User {
 
-    constructor(userId, email, passwordHash, firstName, lastName, role, campusId) {
+    constructor(userId, email, passwordHash, firstName, lastName, role, campusId, bio, isActive) {
 
         this.userId = userId
         this.email = email
@@ -10,6 +9,8 @@ class User {
         this.lastName = lastName
         this.role = role
         this.campusId = campusId
+        this.bio = bio || null
+        this.isActive = isActive
 
     }
 
