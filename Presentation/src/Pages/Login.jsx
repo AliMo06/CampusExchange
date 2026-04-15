@@ -16,7 +16,7 @@ function Login() {
     })
 
     const data = await res.json()
-    
+
     if (!res.ok) {
       setError(data.error)
       return
@@ -24,7 +24,8 @@ function Login() {
 
     localStorage.setItem("token", data.token)
     localStorage.setItem("role", data.role)
-    localStorage.setItem("userId", data.user_id)
+    localStorage.setItem("userId", data.userId)
+    localStorage.setItem("email", email)
     window.location.href = "/"
   }
 
